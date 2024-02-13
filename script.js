@@ -106,9 +106,23 @@ function playSound(path, callback) {
 function stopSound() {
     if (audioPlayer instanceof Audio && !audioPlayer.paused) {
         audioPlayer.pause();
-        audioPlayer.currentTime = 0;
+        //audioPlayer.currentTime = 0;
     }
 };
+
+function continueSound() {
+    if (audioPlayer instanceof Audio && audioPlayer.paused) {
+        audioPlayer.play();
+    }
+}
+
+function changeVolume(value) {
+    if (audioPlayer instanceof Audio && !audioPlayer.paused) {
+        console.log(audioPlayer.volume)
+        audioPlayer.volume += value;
+        console.log(audioPlayer.volume)
+    }
+}
 
 function addAnswer(name) {
     if (name === '') {
@@ -137,8 +151,21 @@ function stopHighlighting() {
     currentIndex = 0;
 }
 
+function answerIsGiven(path, scoreBuffer) { //функция нужна как для правильного ответа, так и для неправильного
+    const melodyPath = path;
+    const currentScore = score.textContent;
+    const newScore = (parseInt(currentScore) + scoreBuffer).toString();
+    score.textContent = newScore;
+    score = null;
+    scoreBuffer = 0;
+    
+    playSound(melodyPath);
+    addAnswer(songName);
+    startHighlighting();
+}
+
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'BracketLeft') {
+    if (event.code === 'BracketLeft') { // Вступление в игру
         const melodyPath = 'assets/music/game_sounds/opening.mp3';
 
         playSound(melodyPath);
@@ -146,7 +173,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'BracketRight') {
+    if (event.code === 'BracketRight') { // Конец игры
         const melodyPath = 'assets/music/game_sounds/ending.mp3';
 
         playSound(melodyPath);
@@ -154,7 +181,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('keydown', function(event) {
-        if (event.code === 'Numpad1') {
+        if (event.code === 'Numpad1') { // Выбор первого игрока
             const melodyPath = 'assets/music/game_sounds/choosenTeam.mp3';
     
             score = document.getElementById('score1');
@@ -166,7 +193,7 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Numpad2') {
+    if (event.code === 'Numpad2') { // Выбор второго игрока
         const melodyPath = 'assets/music/game_sounds/choosenTeam.mp3';
 
         score = document.getElementById('score2');
@@ -178,37 +205,73 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Enter') {
+    if (event.code === 'Enter') { // Верный ответ
         const melodyPath = 'assets/music/game_sounds/rightAnswer.mp3';
-        const currentScore = score.textContent;
-        const newScore = (parseInt(currentScore) + scoreBuffer).toString();
-        score.textContent = newScore;
 
-        playSound(melodyPath);
-        addAnswer(songName);
-        startHighlighting();
+        answerIsGiven(melodyPath, scoreBuffer);
     }
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Numpad0') {
+    if (event.code === 'KeyH') { // Частично верный ответ. H - half
+        const melodyPath = 'assets/music/game_sounds/rightAnswer.mp3';
+
+        answerIsGiven(melodyPath, Math.floor(scoreBuffer/2));
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'KeyD') { // Удвоенные баллы за очень точный и\или понравившийся ответ (Как по типу "Это третий сезон воторой опенинг"). "D" как "Double"
+        const melodyPath = 'assets/music/game_sounds/rightAnswer.mp3';
+        
+        answerIsGiven(melodyPath, scoreBuffer*2);
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'Numpad0') { // теперь это только неправильный ответ с вычетом баллов
         const melodyPath = 'assets/music/game_sounds/wrongAnswer.mp3';
 
-        scoreBuffer = 0;
+        answerIsGiven(melodyPath, scoreBuffer*(-1)); 
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'KeyP') { // Пропуск, если никто не знает. P - pass
+        const melodyPath = 'assets/music/game_sounds/wrongAnswer.mp3';
+        
         playSound(melodyPath);
         addAnswer(songName);
     }
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Backspace') {
+    if (event.code === 'Backspace') { // Остановить воспроизведение
         stopSound();
     }
 });
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'KeyR') {
+    if (event.code === 'KeyC') { // Продолжить воспроизведение. C - continue
+        continueSound();
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'KeyR') { // Воспроизведение заново. R - restart
         playSound('assets/music/pack/' + songName + '.mp3');
+    }
+})
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'NumpadAdd') { // Увеличить громкость аудио на кнопку "-" на нумпаде
+        changeVolume(0.05)
+    }
+})
+
+document.addEventListener('keydown', function(event) {
+    if (event.code === 'NumpadSubtract') { // Уменьшить громкость аудио на кнопку "+" на нумпаде
+        changeVolume(-0.05)
     }
 })
 
